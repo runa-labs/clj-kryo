@@ -1,6 +1,7 @@
 (ns clj-kryo.core
   "Clojure library for the Kryo serialization/deserialization API."
   (:require
+   [clojure.string :as str]
    [clojure.java.io :as jio])
   (:import
    [com.esotericsoftware.kryo Kryo Serializer]
@@ -13,7 +14,7 @@
   (proxy [Serializer] []
     (write [kryo ^Output output object]
       (.writeString output (pr-str object)))
-    (create [kryo ^Input input klass]
+    (read [kryo ^Input input klass]
       (read
        (java.io.PushbackReader.
         (jio/reader (java.io.StringReader. (.readString input))))))))
@@ -44,22 +45,37 @@
           (recur (- n 1) (conj coll (.readClassAndObject kryo input)))
           coll)))))
 
+(defn- log [tag & v]
+  (println tag (str/join " " (map #(str (type %) " " (pr-str %)) v))))
+
+(defn- write-map
+  [^Kryo kryo ^Output output m]
+  (.writeInt output (count m))
+  (doseq [[k v] m]
+    ;;(log :write k v)
+    (.writeClassAndObject kryo output k)
+    (.writeClassAndObject kryo output v)))
+
+(defn- read-map
+  [^Kryo kryo ^Input input]
+  (doall
+   (loop [remaining (.readInt input)
+          data (transient {})]
+     (if (zero? remaining)
+       (persistent! data)
+       (recur (dec remaining)
+              (let [k (.readClassAndObject kryo input)
+                    v (.readClassAndObject kryo input)
+                    ;;_ (log :read k v)
+                    ]
+                (assoc! data k v)))))))
+
 (defn- make-clojure-map-serializer [init-map]
   (proxy [Serializer] []
     (write [^Kryo kryo ^Output output m]
-      (.writeInt output (count m))
-      (doseq [[k v] m]
-        (.writeClassAndObject kryo output k)
-        (.writeClassAndObject kryo output v)))
+      (write-map kryo output m))
     (read [^Kryo kryo ^Input input klass]
-      (loop [n (.readInt input)
-             m init-map]
-        (if (< 0 n)
-          (recur (- n 1)
-                 (assoc m
-                   (.readClassAndObject kryo input)
-                   (.readClassAndObject kryo input)))
-          m)))))
+      (read-map kryo input))))
 
 (defn make-kryo ^Kryo []
   (let [k ^Kryo (new Kryo)]
@@ -71,9 +87,10 @@
                           PersistentHashMap (make-clojure-map-serializer {})
                           PersistentArrayMap (make-clojure-map-serializer {})}]
       (.register k ^Class c ^Serializer s))
+    (.setReferences k false)
     k))
 
-(def clj-kryo (make-kryo))
+(def clojure-kryo (make-kryo))
 
 (defmulti make-input class)
 (defmethod make-input String ^Input [^String path] (make-input (jio/file path)))
@@ -87,10 +104,10 @@
 (defmethod make-output OutputStream ^Output [^OutputStream fs] (Output. fs))
 (defmethod make-output Output ^Output [^Output out] out)
 
-(defn read-object [^Input input] (.readClassAndObject ^Kryo clj-kryo input))
+(defn read-object [^Input input] (.readClassAndObject ^Kryo clojure-kryo input))
 
 (defn write-object [^Output output object]
-  (.writeClassAndObject ^Kryo clj-kryo output object))
+  (.writeClassAndObject ^Kryo clojure-kryo output object))
 
 (defn object-seq [^Input input]
   (when-let [obj (read-object input)]

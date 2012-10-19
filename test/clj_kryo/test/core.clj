@@ -34,4 +34,14 @@
 
   (let [m {:foo 1 :bar [2 3] :baz "four"}]
     (is (= m (kryo-round-trip m))))
+
+  (let [m {32  {"int" 1 "string" "string"}
+           65 {"foo" "bar"}}]
+    (is (= m
+           (let [bos (ByteArrayOutputStream.)]
+             (with-open [out ^Output (kryo/make-output bos)]
+               (kryo/write-object out m))
+             (let [bis (ByteArrayInputStream. (.toByteArray bos))]
+               (with-open [in ^Input (kryo/make-input bis)]
+                 (into {} (kryo/read-object in))))))))
   )
