@@ -31,6 +31,7 @@
   (is (= '("foo") (kryo-round-trip '("foo"))))
   (is (= #{"foo"} (kryo-round-trip #{"foo"})))
   (is (= #{"foo" 1} (kryo-round-trip #{"foo" 1})))
+  (is (= ["foo"] (kryo-round-trip (lazy-seq ["foo"]))))
 
   (let [m {:foo 1 :bar [2 3] :baz "four"}]
     (is (= m (kryo-round-trip m))))

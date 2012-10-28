@@ -7,7 +7,7 @@
    [com.esotericsoftware.kryo Kryo Serializer]
    [com.esotericsoftware.kryo.io Output Input]
    [clojure.lang Keyword Symbol PersistentVector PersistentList PersistentHashSet
-    PersistentHashMap PersistentArrayMap]
+    PersistentHashMap PersistentArrayMap LazySeq]
    [java.io File OutputStream InputStream FileOutputStream FileInputStream]))
 
 (defn- make-clojure-reader-serializer []
@@ -45,14 +45,10 @@
           (recur (- n 1) (conj coll (.readClassAndObject kryo input)))
           coll)))))
 
-(defn- log [tag & v]
-  (println tag (str/join " " (map #(str (type %) " " (pr-str %)) v))))
-
 (defn- write-map
   [^Kryo kryo ^Output output m]
   (.writeInt output (count m))
   (doseq [[k v] m]
-    ;;(log :write k v)
     (.writeClassAndObject kryo output k)
     (.writeClassAndObject kryo output v)))
 
@@ -65,9 +61,7 @@
        (persistent! data)
        (recur (dec remaining)
               (let [k (.readClassAndObject kryo input)
-                    v (.readClassAndObject kryo input)
-                    ;;_ (log :read k v)
-                    ]
+                    v (.readClassAndObject kryo input)]
                 (assoc! data k v)))))))
 
 (defn- make-clojure-map-serializer [init-map]
@@ -85,7 +79,8 @@
                           PersistentList (make-clojure-coll-serializer '())
                           PersistentHashSet (make-clojure-coll-serializer #{})
                           PersistentHashMap (make-clojure-map-serializer {})
-                          PersistentArrayMap (make-clojure-map-serializer {})}]
+                          PersistentArrayMap (make-clojure-map-serializer {})
+                          LazySeq (make-clojure-coll-serializer [])}]
       (.register k ^Class c ^Serializer s))
     (.setReferences k false)
     k))
