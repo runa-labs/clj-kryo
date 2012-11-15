@@ -1,4 +1,4 @@
-(defproject com.runa/clj-kryo "1.2.0-SNAPSHOT"
+(defproject com.runa/clj-kryo "1.2.0"
   :description "Clojure library for the Kryo serialization API."
   :plugins [[s3-wagon-private "1.1.2"]
             [lein-swank "1.4.4"]]
