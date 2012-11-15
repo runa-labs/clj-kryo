@@ -4,8 +4,9 @@
    [clj-kryo.core :as kryo])
   (:import
    java.util.HashMap
+   [java.io ByteArrayInputStream ByteArrayOutputStream]
    [com.esotericsoftware.kryo.io Output Input]
-   [java.io ByteArrayInputStream ByteArrayOutputStream]))
+   clj_kryo.support.KryoSerializer))
 
 (deftest write-object
   (is (< 0
@@ -44,5 +45,8 @@
                (kryo/write-object out m))
              (let [bis (ByteArrayInputStream. (.toByteArray bos))]
                (with-open [in ^Input (kryo/make-input bis)]
-                 (into {} (kryo/read-object in))))))))
-  )
+                 (into {} (kryo/read-object in)))))))))
+
+(deftest kryo-serializer
+  (let [m {:a 1}]
+    (is (= m (KryoSerializer/read (KryoSerializer/write m))))))

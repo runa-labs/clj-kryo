@@ -4,11 +4,12 @@
    [clojure.string :as str]
    [clojure.java.io :as jio])
   (:import
-   [com.esotericsoftware.kryo Kryo Serializer]
-   [com.esotericsoftware.kryo.io Output Input]
+   [java.io File OutputStream InputStream FileOutputStream FileInputStream]
    [clojure.lang Keyword Symbol PersistentVector PersistentList PersistentHashSet
     PersistentHashMap PersistentArrayMap LazySeq]
-   [java.io File OutputStream InputStream FileOutputStream FileInputStream]))
+   [com.esotericsoftware.kryo Kryo Serializer]
+   [com.esotericsoftware.kryo.io Output Input]
+   [clj_kryo.support KryoWrapper KryoSerializer]))
 
 (defn- make-clojure-reader-serializer []
   (proxy [Serializer] []
@@ -85,7 +86,10 @@
     (.setReferences k false)
     k))
 
-(def clojure-kryo (make-kryo))
+(def ^:private clojure-kryo
+  (let [kryo (make-kryo)]
+    (KryoSerializer/setKryo kryo)
+    kryo))
 
 (defmulti make-input class)
 (defmethod make-input String ^Input [^String path] (make-input (jio/file path)))
@@ -99,7 +103,8 @@
 (defmethod make-output OutputStream ^Output [^OutputStream fs] (Output. fs))
 (defmethod make-output Output ^Output [^Output out] out)
 
-(defn read-object [^Input input] (.readClassAndObject ^Kryo clojure-kryo input))
+(defn read-object [^Input input]
+  (.readClassAndObject ^Kryo clojure-kryo input))
 
 (defn write-object [^Output output object]
   (.writeClassAndObject ^Kryo clojure-kryo output object))
@@ -107,3 +112,6 @@
 (defn object-seq [^Input input]
   (when-let [obj (read-object input)]
     (cons obj (lazy-seq (object-seq input)))))
+
+(defn wrap-kryo-serializable [object]
+  (KryoWrapper. object))
