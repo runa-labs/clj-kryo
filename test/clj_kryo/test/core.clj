@@ -16,12 +16,9 @@
            (.size bos)))))
 
 (defn kryo-round-trip [expr]
-  (let [bos (ByteArrayOutputStream.)]
-    (with-open [out ^Output (kryo/make-output bos)]
-      (kryo/write-object out expr))
-    (let [bis (ByteArrayInputStream. (.toByteArray bos))]
-      (with-open [in ^Input (kryo/make-input bis)]
-        (kryo/read-object in)))))
+  (-> expr
+      kryo/serialize
+      kryo/deserialize))
 
 (deftest read-object
   (is (= 1 (kryo-round-trip 1)))
@@ -385,4 +382,6 @@
 (deftest example-session-test
   (testing "serialization/deserialation of example session"
     (is (= example-session)
-        (kryo-round-trip example-session))))
+        (-> example-session
+            kryo/serialize
+            kryo/deserialize))))

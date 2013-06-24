@@ -115,3 +115,9 @@
 
 (defn wrap-kryo-serializable [object]
   (KryoWrapper. object))
+
+(defn serialize [clj-data]
+  (KryoSerializer/write clj-data))
+
+(defn deserialize [clj-data-bin]
+  (KryoSerializer/read clj-data-bin))
