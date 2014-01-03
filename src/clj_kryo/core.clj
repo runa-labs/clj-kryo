@@ -1,16 +1,14 @@
 (ns clj-kryo.core
   "Clojure library for the Kryo serialization/deserialization API."
-  (:require
-   [clojure.string :as str]
-   [clojure.java.io :as jio])
-  (:import
-   [java.io File OutputStream InputStream FileOutputStream FileInputStream]
-   [java.util UUID]
-   [clojure.lang Keyword Symbol PersistentVector PersistentList PersistentHashSet
-    PersistentHashMap PersistentArrayMap LazySeq]
-   [com.esotericsoftware.kryo Kryo Serializer]
-   [com.esotericsoftware.kryo.io Output Input]
-   [clj_kryo.support KryoWrapper KryoSerializer]))
+  (:require [clojure.string :as str]
+            [clojure.java.io :as jio])
+  (:import [java.io File OutputStream InputStream FileOutputStream FileInputStream]
+           [java.util UUID]
+           [clojure.lang Keyword Symbol PersistentVector PersistentList PersistentHashSet
+            PersistentHashMap PersistentArrayMap LazySeq]
+           [com.esotericsoftware.kryo Kryo Serializer]
+           [com.esotericsoftware.kryo.io Output Input]
+           [clj_kryo.support KryoWrapper KryoSerializer]))
 
 (defn make-uuid-serializer []
   (proxy [Serializer] []
@@ -55,15 +53,13 @@
           (recur (- n 1) (conj coll (.readClassAndObject kryo input)))
           coll)))))
 
-(defn- write-map
-  [^Kryo kryo ^Output output m]
+(defn- write-map [^Kryo kryo ^Output output m]
   (.writeInt output (count m))
   (doseq [[k v] m]
     (.writeClassAndObject kryo output k)
     (.writeClassAndObject kryo output v)))
 
-(defn- read-map
-  [^Kryo kryo ^Input input]
+(defn- read-map [^Kryo kryo ^Input input]
   (doall
    (loop [remaining (.readInt input)
           data (transient {})]
@@ -82,24 +78,21 @@
       (read-map kryo input))))
 
 (defn make-kryo ^Kryo []
-  (let [k ^Kryo (new Kryo)]
-    (doseq [[^Class c s] {Keyword (make-clojure-keyword-serializer)
-                          Symbol (make-clojure-symbol-serializer)
-                          UUID (make-uuid-serializer)
-                          PersistentVector (make-clojure-coll-serializer [])
-                          PersistentList (make-clojure-coll-serializer '())
-                          PersistentHashSet (make-clojure-coll-serializer #{})
-                          PersistentHashMap (make-clojure-map-serializer {})
-                          PersistentArrayMap (make-clojure-map-serializer {})
-                          LazySeq (make-clojure-coll-serializer [])}]
-      (.register k ^Class c ^Serializer s))
-    (.setReferences k false)
-    k))
+  (doto (Kryo.)
+    (.setReferences false)
+    (.register Keyword (make-clojure-keyword-serializer))
+    (.register Symbol (make-clojure-symbol-serializer))
+    (.register UUID (make-uuid-serializer))
+    (.register PersistentVector (make-clojure-coll-serializer []))
+    (.register PersistentList (make-clojure-coll-serializer '()))
+    (.register PersistentHashSet (make-clojure-coll-serializer #{}))
+    (.register PersistentHashMap (make-clojure-map-serializer {}))
+    (.register PersistentArrayMap (make-clojure-map-serializer {}))
+    (.register LazySeq (make-clojure-coll-serializer []))))
 
 (def ^:private clojure-kryo
-  (let [kryo (make-kryo)]
-    (KryoSerializer/setKryo kryo)
-    kryo))
+  (doto (make-kryo)
+    KryoSerializer/setKryo))
 
 (defmulti make-input class)
 (defmethod make-input String ^Input [^String path] (make-input (jio/file path)))
