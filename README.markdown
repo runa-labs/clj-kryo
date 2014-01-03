@@ -3,9 +3,17 @@
 Clojure wrapper for Kryo, a fast and efficient object graph serialization framework for Java.
 
 
+## Leiningen
+
+```clj
+  [org.clojars.runa/clj-kryo "1.4.0"]
+```
+
 ## Usage
 
 May be best explained by following example:
+
+(require '[clj-kryo.core :as kryo])
 
 (defn kryo-round-trip [expr]
   (let [bos (ByteArrayOutputStream.)]
