@@ -5,11 +5,20 @@
    [clojure.java.io :as jio])
   (:import
    [java.io File OutputStream InputStream FileOutputStream FileInputStream]
+   [java.util UUID]
    [clojure.lang Keyword Symbol PersistentVector PersistentList PersistentHashSet
     PersistentHashMap PersistentArrayMap LazySeq]
    [com.esotericsoftware.kryo Kryo Serializer]
    [com.esotericsoftware.kryo.io Output Input]
    [clj_kryo.support KryoWrapper KryoSerializer]))
+
+(defn make-uuid-serializer []
+  (proxy [Serializer] []
+    (write [kryo ^Output output object]
+      (.writeLong output (.getMostSignificantBits object) false)
+      (.writeLong output (.getLeastSignificantBits object) false))
+    (read [kryo ^Input input klass]
+      (UUID. (.readLong input false) (.readLong input false)))))
 
 (defn- make-clojure-reader-serializer []
   (proxy [Serializer] []
@@ -76,6 +85,7 @@
   (let [k ^Kryo (new Kryo)]
     (doseq [[^Class c s] {Keyword (make-clojure-keyword-serializer)
                           Symbol (make-clojure-symbol-serializer)
+                          UUID (make-uuid-serializer)
                           PersistentVector (make-clojure-coll-serializer [])
                           PersistentList (make-clojure-coll-serializer '())
                           PersistentHashSet (make-clojure-coll-serializer #{})
