@@ -39,7 +39,7 @@
 (defn- make-clojure-keyword-serializer []
   (proxy [Serializer] []
     (write [kryo ^Output output object]
-      (.writeString output (name object)))
+      (.writeString output (str (.-sym object))))
     (read [kryo ^Input input klass]
       (clojure.lang.Keyword/intern (.readString input)))))
 

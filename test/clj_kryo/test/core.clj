@@ -25,6 +25,7 @@
   (is (= "abc" (kryo-round-trip "abc")))
   (is (= 'abc (kryo-round-trip 'abc)))
   (is (= :abc (kryo-round-trip :abc)))
+  (is (= :abc/def (kryo-round-trip :abc/def)))
   (is (= #uuid "2ee8cfbc-44e3-4452-b638-f099a6d3319e"
          (kryo-round-trip #uuid "2ee8cfbc-44e3-4452-b638-f099a6d3319e")))
   (is (= ["foo"] (kryo-round-trip ["foo"])))
