@@ -1,4 +1,4 @@
-/target/classes
+/target
 *.jar
 *~
 /.lein-deps-sum
