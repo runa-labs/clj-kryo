@@ -1,4 +1,4 @@
-(defproject org.clojars.runa/clj-kryo "1.3.0"
+(defproject org.clojars.runa/clj-kryo "1.4.0"
   :description "Clojure library for the Kryo serialization API."
   :dependencies [[org.clojure/clojure "1.4.0"]
                  [com.esotericsoftware.kryo/kryo "2.21"]]
