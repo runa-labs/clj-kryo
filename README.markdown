@@ -6,7 +6,7 @@ Clojure wrapper for Kryo, a fast and efficient object graph serialization framew
 ## Leiningen
 
 ```clj
-  [org.clojars.runa/clj-kryo "1.4.0"]
+  [org.clojars.runa/clj-kryo "1.5.0"]
 ```
 
 ## Usage

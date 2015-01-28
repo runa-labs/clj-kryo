@@ -1,7 +1,7 @@
-(defproject org.clojars.runa/clj-kryo "1.4.1"
+(defproject org.clojars.runa/clj-kryo "1.5.0"
   :description "Clojure library for the Kryo serialization API."
   :url "https://github.com/runa-labs/clj-kryo"
-  :dependencies [[org.clojure/clojure "1.5.1"]
-                 [com.esotericsoftware.kryo/kryo "2.21"]]
+  :dependencies [[org.clojure/clojure "1.6.0"]
+                 [com.esotericsoftware/kryo "3.0.0"]]
   :java-source-paths ["src/java"]
   :aot [clj-kryo.core])
